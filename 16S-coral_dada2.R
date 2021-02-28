@@ -157,6 +157,9 @@ write.csv(track,file="ReadFilterStats_AllData_final.csv",row.names=TRUE,quote=FA
 #modified version for phyloseq looks like this instead:
 #>Symbiodinium; Clade A; A1.1
 
+#https://zenodo.org/record/2541239#.YDvxnGhKg2x 
+# website for taxonomy 
+
 taxa <- assignTaxonomy(seqtab.nochim, "GTDB_bac-arc_ssu_r86.fa", minBoot=5,multithread=TRUE,tryRC=TRUE,outputBootstraps=FALSE)
 #minboot should be higher
 #Obtain a csv file for the taxonomy so that it's easier to map the sequences for the heatmap.
