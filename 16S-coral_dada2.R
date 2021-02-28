@@ -13,7 +13,7 @@ library(ggplot2); #packageVersion("ggplot2")
 library(phyloseq); #packageVersion("phyloseq")
 
 #Set path to unzipped, renamed fastq files
-path <- "C:/Users/susri/Documents/BI 586/BI586_mainfiles/Community_Data/Comm_Data" # CHANGE ME to the directory containing the fastq files after unzipping.
+path <- "/projectnb/bi594/skoppara/Assignment1" # CHANGE ME to the directory containing the fastq files after unzipping.
 fns <- list.files(path)
 #Let's make sure that all of our files are there
 fns
@@ -25,7 +25,7 @@ fns
 fastqs <- fns[grepl(".fastq$", fns)]
 fastqs <- sort(fastqs) # Sort ensures reads are in same order
 #fnFs <- fastqs[grepl("_R1", fastqs)] # Just the forward read files- these are old 454 data but most data are paired end
-
+fastqs
 # Get sample names, assuming files named as so: SAMPLENAME_XXX.fastq; OTHERWISE MODIFY
 sample.names <- sapply(strsplit(fastqs, ".fastq"), `[`, 1) #the last number will select the field for renaming
 sample.names
