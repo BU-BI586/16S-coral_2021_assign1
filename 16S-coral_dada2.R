@@ -51,7 +51,7 @@ if(!file_test("-d", filt_path)) dir.create(filt_path)
 filtFs <- file.path(filt_path, paste0(sample.names, "_F_filt.fastq.gz"))
 
 # Filter
-out <- filterAndTrim(fnFs, filtFs, truncLen= 300, #end of single end reads = approx. 300 bp
+out <- filterAndTrim(fnFs, filtFs, truncLen= 150, #end of single end reads = approx. 300 bp
                      maxN=0, #DADA does not allow Ns
                      maxEE=1, #allow 1 expected errors, where EE = sum(10^(-Q/10)); more conservative, model converges
                      truncQ=2, 
@@ -99,14 +99,14 @@ names(derepFs) <- sample.names
 ################################
 
 #Must change some of the DADA options b/c original program optomized for ribosomal data, not ITS - from github, "We currently recommend BAND_SIZE=32 for ITS data." leave as default for 16S/18S
-setDadaOpt(BAND_SIZE=32)
+setDadaOpt(BAND_SIZE=16)
 dadaFs <- dada(derepFs, err=errF, multithread=TRUE)
 
 #now, look at the dada class objects by sample
 #will tell how many 'real' variants in unique input seqs
 #By default, the dada function processes each sample independently, but pooled processing is available with pool=TRUE and that may give better results for low sampling depths at the cost of increased computation time. See our discussion about pooling samples for sample inference. 
 dadaFs[[1]]
-dadaFs[[25]]
+dadaFs[[5]]
 
 #construct sequence table
 seqtab <- makeSequenceTable(dadaFs)
@@ -129,8 +129,8 @@ sum(seqtab.nochim)/sum(seqtab)
 #Most of your reads should remain after chimera removal (it is not uncommon for a majority of sequence variants to be removed though)
 #For our sample, this ratio was 0.9998201, there was only 1 bimera
 
-write.csv(seqtab,file="Alizah_seqtab.csv")
-write.csv(seqtab.nochim,file="Alizah_nochim.csv")
+write.csv(seqtab,file="16s_seqtab.csv")
+write.csv(seqtab.nochim,file="16s_nochim.csv")
 ################################
 ##### Track Read Stats #######
 ################################
@@ -157,7 +157,7 @@ write.csv(track,file="ReadFilterStats_AllData_final.csv",row.names=TRUE,quote=FA
 #modified version for phyloseq looks like this instead:
 #>Symbiodinium; Clade A; A1.1
 
-taxa <- assignTaxonomy(seqtab.nochim, "GeoSymbio_ITS2_LocalDatabase_verForPhyloseq.fasta", minBoot=5,multithread=TRUE,tryRC=TRUE,outputBootstraps=FALSE)
+taxa <- assignTaxonomy(seqtab.nochim, "GTDB_bac-arc_ssu_r86.fa", minBoot=5,multithread=TRUE,tryRC=TRUE,outputBootstraps=FALSE)
 #minboot should be higher
 #Obtain a csv file for the taxonomy so that it's easier to map the sequences for the heatmap.
 write.csv(taxa, file="taxa.csv",row.name=TRUE,quote=FALSE)
