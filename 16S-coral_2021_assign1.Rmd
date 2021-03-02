@@ -184,7 +184,7 @@ unname(taxa)
 ## Visualize Data
 
 ```{r,echo=FALSE}
-setwd("C:/Users/susri/Documents/BI 586/16S-coral_2021_assign1")
+setwd("/projectnb/bi594/skoppara/Assignment1/")
 
 ```
 

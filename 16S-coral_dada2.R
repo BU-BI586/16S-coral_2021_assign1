@@ -22,7 +22,7 @@ fns
 ##### Trimming/Filtering #######
 ################################
 
-fastqs <- fns[grepl(".fastq$", fns)]
+fastqs <- fns[grepl(".fastq$", fns)] 
 fastqs <- sort(fastqs) # Sort ensures reads are in same order
 #fnFs <- fastqs[grepl("_R1", fastqs)] # Just the forward read files- these are old 454 data but most data are paired end
 fastqs
@@ -85,7 +85,11 @@ out <- filterAndTrim(fnFs, filtFs, truncLen= 200, #end of single end reads = app
                      maxN=0, #DADA does not allow Ns
                      maxEE=1, #allow 1 expected errors, where EE = sum(10^(-Q/10)); more conservative, model converges
                      truncQ=2, 
+<<<<<<< HEAD
+                    # trimLeft=31, #N nucleotides to remove from the start of each read: ITS2 primer = F 20bp
+=======
                      # trimLeft=31, #N nucleotides to remove from the start of each read: ITS2 primer = F 20bp
+>>>>>>> da413ece0eda99f64435ace8439b62e000db8496
                      rm.phix=TRUE, #remove reads matching phiX genome
                      compress=TRUE, multithread=FALSE) # On Windows set multithread=FALSE
 
@@ -192,8 +196,13 @@ write.csv(track,file="ReadFilterStats_AllData_final.csv",row.names=TRUE,quote=FA
 
 #Michael R. McLaren. (2020). Silva SSU taxonomic training data formatted for DADA2 (Silva version 138) (Version 2) [Data set]. Zenodo. http://doi.org/10.5281/zenodo.3986799
 
+<<<<<<< HEAD
+taxa <- assignTaxonomy(seqtab.nochim, "/projectnb/bi594/skoppara/Assignment1/silva_nr99_v138_train_set.fa", minBoot = 50, multithread=TRUE, tryRC=TRUE)
+taxa <- addSpecies(taxa, "/projectnb/bi594/skoppara/Assignment1/silva_species_assignment_v138.fa.gz")
+=======
 taxa <- assignTaxonomy(seqtab.nochim, "/projectnb/bi594/skoppara/Assignment1/silva_nr99_v138_train_set.fa", multithread=TRUE, tryRC=TRUE)
 taxa <- addSpecies(taxa, "/projectnb/bi594/skoppara/Assignment1/silva_species_assignment_v138.fa.gz", minBoot=50)
+>>>>>>> da413ece0eda99f64435ace8439b62e000db8496
 #taxa <- assignTaxonomy(seqtab.nochim, "GTDB_bac-arc_ssu_r86.fa", minBoot=5,multithread=TRUE,tryRC=TRUE,outputBootstraps=FALSE)
 #minboot should be higher
 #Obtain a csv file for the taxonomy so that it's easier to map the sequences for the heatmap.
