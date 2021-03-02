@@ -33,10 +33,44 @@ sample.names
 fnFs <- file.path(path, fastqs)
 fnFs
 
+#######primers
+#https://github.com/Nicfall/moorea_holobiont/blob/master/mr_16S/mr16s.R
+
+FWD <- "TATGGTAATTGTCTCCTACTTRRSGCAGCAG"  ## CHANGE ME to your forward primer sequence
+REV <- "AGTCAGTCAGCCGGACTACNVGGGTWTCTAAT"  ## CHANGE ME...
+
+allOrients <- function(primer) {
+  # Create all orientations of the input sequence
+  require(Biostrings)
+  dna <- DNAString(primer)  # The Biostrings works w/ DNAString objects rather than character vectors
+  orients <- c(Forward = dna, Complement = complement(dna), Reverse = reverse(dna), 
+               RevComp = reverseComplement(dna))
+  return(sapply(orients, toString))  # Convert back to character vector
+}
+FWD.orients <- allOrients(FWD)
+REV.orients <- allOrients(REV)
+FWD.orients
+REV.orients
+
+fnFs.filtN <- file.path(path, "filtN", basename(fnFs)) # Put N-filterd files in filtN/ subdirectory
+#fnRs.filtN <- file.path(path, "filtN", basename(fnRs))
+filterAndTrim(fnFs, fnFs.filtN, maxN = 0, multithread = TRUE)
+
+primerHits <- function(primer, fn) {
+  # Counts number of reads in which the primer is found
+  nhits <- vcountPattern(primer, sread(readFastq(fn)), fixed = FALSE)
+  return(sum(nhits > 0))
+}
+primerHits
+rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[3]]), 
+      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[3]]), 
+      REV.ForwardReads = sapply(REV.orients, primerHits, fn = fnFs.filtN[[3]]), 
+      REV.ReverseReads = sapply(REV.orients, primerHits, fn = fnFs.filtN[[3]]))
+
 #########Visualize Raw data
 
 #First, lets look at quality profile of R1 reads
-plotQualityProfile(fnFs[c(1,2,3,4,5,6,7,8,9)])
+plotQualityProfile(fnFs.filtN[c(1,2,3,4,5,6,7,8,9)])
 
 #Recommend trimming where quality profile crashes - in this case, forward reads mostly fine up to 300
 #For common ITS amplicon strategies with paired end reads, it is undesirable to truncate reads to a fixed length due to the large amount of length variation at that locus. That is OK, just leave out truncLen. Make sure you removed the forward and reverse primers from both the forward and reverse reads though! 
@@ -47,11 +81,11 @@ if(!file_test("-d", filt_path)) dir.create(filt_path)
 filtFs <- file.path(filt_path, paste0(sample.names, "_F_filt.fastq.gz"))
 
 # Filter
-out <- filterAndTrim(fnFs, filtFs, truncLen= 150, #end of single end reads = approx. 300 bp
+out <- filterAndTrim(fnFs, filtFs, truncLen= 200, #end of single end reads = approx. 300 bp
                      maxN=0, #DADA does not allow Ns
                      maxEE=1, #allow 1 expected errors, where EE = sum(10^(-Q/10)); more conservative, model converges
                      truncQ=2, 
-                     trimLeft=31, #N nucleotides to remove from the start of each read: ITS2 primer = F 20bp
+                     # trimLeft=31, #N nucleotides to remove from the start of each read: ITS2 primer = F 20bp
                      rm.phix=TRUE, #remove reads matching phiX genome
                      compress=TRUE, multithread=FALSE) # On Windows set multithread=FALSE
 
@@ -156,7 +190,11 @@ write.csv(track,file="ReadFilterStats_AllData_final.csv",row.names=TRUE,quote=FA
 #https://zenodo.org/record/2541239#.YDvxnGhKg2x 
 # website for taxonomy 
 
-taxa <- assignTaxonomy(seqtab.nochim, "GTDB_bac-arc_ssu_r86.fa", minBoot=5,multithread=TRUE,tryRC=TRUE,outputBootstraps=FALSE)
+#Michael R. McLaren. (2020). Silva SSU taxonomic training data formatted for DADA2 (Silva version 138) (Version 2) [Data set]. Zenodo. http://doi.org/10.5281/zenodo.3986799
+
+taxa <- assignTaxonomy(seqtab.nochim, "/projectnb/bi594/skoppara/Assignment1/silva_nr99_v138_train_set.fa", multithread=TRUE, tryRC=TRUE)
+taxa <- addSpecies(taxa, "/projectnb/bi594/skoppara/Assignment1/silva_species_assignment_v138.fa.gz", minBoot=50)
+#taxa <- assignTaxonomy(seqtab.nochim, "GTDB_bac-arc_ssu_r86.fa", minBoot=5,multithread=TRUE,tryRC=TRUE,outputBootstraps=FALSE)
 #minboot should be higher
 #Obtain a csv file for the taxonomy so that it's easier to map the sequences for the heatmap.
 write.csv(taxa, file="taxa.csv",row.name=TRUE,quote=FALSE)
