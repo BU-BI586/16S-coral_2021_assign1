@@ -37,10 +37,6 @@ fnFs
 
 #First, lets look at quality profile of R1 reads
 plotQualityProfile(fnFs[c(1,2,3,4,5,6,7,8,9)])
-plotQualityProfile(fnFs[c(10,11,12,13,14,15,16,17,18)])
-plotQualityProfile(fnFs[c(19,20,21,22,23,24,25,26,27)])
-plotQualityProfile(fnFs[c(28,29,30,31,32,33,34,35)])
-plotQualityProfile(fnFs[c(36,37,38,39,40,41)])
 
 #Recommend trimming where quality profile crashes - in this case, forward reads mostly fine up to 300
 #For common ITS amplicon strategies with paired end reads, it is undesirable to truncate reads to a fixed length due to the large amount of length variation at that locus. That is OK, just leave out truncLen. Make sure you removed the forward and reverse primers from both the forward and reverse reads though! 
@@ -55,7 +51,7 @@ out <- filterAndTrim(fnFs, filtFs, truncLen= 150, #end of single end reads = app
                      maxN=0, #DADA does not allow Ns
                      maxEE=1, #allow 1 expected errors, where EE = sum(10^(-Q/10)); more conservative, model converges
                      truncQ=2, 
-                     trimLeft=20, #N nucleotides to remove from the start of each read: ITS2 primer = F 20bp
+                     trimLeft=31, #N nucleotides to remove from the start of each read: ITS2 primer = F 20bp
                      rm.phix=TRUE, #remove reads matching phiX genome
                      compress=TRUE, multithread=FALSE) # On Windows set multithread=FALSE
 
