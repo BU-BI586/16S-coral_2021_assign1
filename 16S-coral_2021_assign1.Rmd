@@ -37,7 +37,7 @@ packageVersion("phyloseq")
 [Sweet et. al 2019](https://microbiomejournal.biomedcentral.com/articles/10.1186/s40168-019-0759-6) collected samples from healthy and diseased *Porites lobata*, as well as the water column of the Luminao reef flat in Guam (in 2016). Their data that was reanalyzed here was retrieved from [NCBI](https://www.ncbi.nlm.nih.gov/sra?LinkName=bioproject_sra_all&from_uid=448821).
 
 Samples diseased 13, healthy 11, healthy 4, diseased 14, water column 2 were selected. All files in the directory were put in the variable fns. 
-```{r,eval=FALSE}
+```{r, results=FALSE}
 path <- "/projectnb/bi594/skoppara/Assignment1"
 fns <- list.files(path)
 fns
@@ -45,31 +45,80 @@ fns
 
 ## Trimming and Filtering Data
 Filter through all the files and find only the fastq files. Sort them so that the reads are in the same order. 
-```{r, eval=FALSE}
+```{r}
 fastqs <- fns[grepl(".fastq$", fns)]
 fastqs <- sort(fastqs) 
 fastqs
 ```
 
 Split and store each of the files names as sample names without the .fastq file extension. Store these in another variable.
-```{r, eval=FALSE}
-sample.names <- sapply(strsplit(fastqs, ".fastq")
+```{r}
+sample.names <- sapply(strsplit(fastqs, ".fastq"), `[`, 1) 
+#sample.names
 fnFs <- file.path(path, fastqs)
-fnFs
+#fnFs
+
 ```
+
+## Sequence Verification
+*code adapted from [Nicola Kriefall](https://github.com/Nicfall/moorea_holobiont/blob/master/mr_16S/mr16s.R)*
+
+The forward and reverse primers as defined from the Sweet et. al paper are shown below.
+```{r}
+FWD <- "TATGGTAATTGTCTCCTACTTRRSGCAGCAG"  
+REV <- "AGTCAGTCAGCCGGACTACNVGGGTWTCTAAT"
+```
+
+The below function takes in a character vector primer and creates all the orientations of that sequence. The vector is converted to a DNA String object using the Biostrings package. The DNA string object can be used to evaluate the complement of the sequences. All orients are converted back to character vectors upon return. 
+```{r}
+allOrients <- function(primer) {
+  require(Biostrings)
+  dna <- DNAString(primer)  
+  orients <- c(Forward = dna, Complement = complement(dna), Reverse = reverse(dna), 
+               RevComp = reverseComplement(dna))
+  return(sapply(orients, toString))  
+}
+```
+
+The forward and reverse orients are as follows. 
+```{r, echo=FALSE}
+FWD.orients <- allOrients(FWD)
+REV.orients <- allOrients(REV)
+FWD.orients
+REV.orients
+```
+
+
+```{r}
+fnFs.filtN <- file.path(path, "filtN", basename(fnFs))
+filterAndTrim(fnFs, fnFs.filtN, maxN = 0, multithread = TRUE)
+```
+
+The below function takes in a primer sequence and a read. It counts the number of reads in which the primer is found and returns this value. 
+```{r, results=FALSE}
+primerHits <- function(primer, fn) {
+  nhits <- vcountPattern(primer, sread(readFastq(fn)), fixed = FALSE)
+  return(sum(nhits > 0))
+}
+primerHits
+```
+
+The below tables show that the primers were removed from the sequences already. No left trim is necessary when filtering the actual sequences. 
+```{r}
+rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[3]]), 
+      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[3]]), 
+      REV.ForwardReads = sapply(REV.orients, primerHits, fn = fnFs.filtN[[3]]), 
+      REV.ReverseReads = sapply(REV.orients, primerHits, fn = fnFs.filtN[[3]]))
+```
+
 
 
 #### Visualize Raw Data
 
-Plot the quality of the reads to visually analyze. 
-```{r, eval=FALSE}
+The quality plot below shows that the quality stays above or at 20 for the whole length of the sequence, however, around 200 quality does start to drop to 20. For this reason, the truncation length was chosen to be 200. 
+```{r}
 plotQualityProfile(fnFs[c(1,2,3,4,5,6,7,8,9)])
-plotQualityProfile(fnFs[c(10,11,12,13,14,15,16,17,18)])
-plotQualityProfile(fnFs[c(19,20,21,22,23,24,25,26,27)])
-plotQualityProfile(fnFs[c(28,29,30,31,32,33,34,35)])
-plotQualityProfile(fnFs[c(36,37,38,39,40,41)])
 ```
-The quality stays above 20 for the whole length of the sequences, however the quality does drop a little around 150 which is why that was chosen as the truncation length. 
 
 A directory is made for the filtered files and filenames using the following code. 
 ```{r, eval=FALSE}
@@ -78,19 +127,18 @@ if(!file_test("-d", filt_path)) dir.create(filt_path)
 filtFs <- file.path(filt_path, paste0(sample.names, "_F_filt.fastq.gz"))
 ```
 
-The truncation length was defined to 150. No Ns are allowed and expected errors allowed was 1. N nucleotides to remove from the start was 31 because each 16S primer = F 31 bp. 
+The truncation length was defined to 200. No Ns are allowed and expected errors allowed was 1. All other settings were set to the defaults. 
 ```{r, eval=FALSE}
-out <- filterAndTrim(fnFs, filtFs, truncLen= 150,
+out <- filterAndTrim(fnFs, filtFs, truncLen= 200,
                      maxN=0, 
                      maxEE=1, 
                      truncQ=2, 
-                     trimLeft=20, #N nucleotides to remove from the start of each read: ITS2 primer = F 20bp
                      rm.phix=TRUE, 
                      compress=TRUE, 
                      multithread=FALSE) 
 ```
 
-```{r,eval=FALSE}
+```{r,echo=FALSE, eval=FALSE}
 head(out)
 ```
 
