@@ -289,5 +289,4 @@ p + geom_bar(stat="identity", colour="black")
 
 
 ## Conclusion
-insert conclusion here
-
+ We found that diseased colonies have a higher abundance of cyanobacteria than healthy colonies, in accordance with the findings of Sweet et al (2019). We additionally found that healthy colonies had higher abundances of gammaproteobacteria compared to diseased colonies. 
