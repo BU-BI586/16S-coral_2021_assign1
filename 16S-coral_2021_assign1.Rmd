@@ -223,9 +223,11 @@ write.csv(track,file="ReadFilterStats_AllData_final.csv",row.names=TRUE,quote=FA
 
 
 ## Assign Taxonomy
+Michael R. McLaren. (2020). Silva SSU taxonomic training data formatted for DADA2 (Silva version 138) (Version 2) [Data set]. Zenodo. http://doi.org/10.5281/zenodo.3986799
 ```{r, eval=FALSE}
-taxa <- assignTaxonomy(seqtab.nochim, "GTDB_bac-arc_ssu_r86.fa", minBoot=5,multithread=TRUE,tryRC=TRUE,outputBootstraps=FALSE)
-#minboot should be higher
+taxa <- assignTaxonomy(seqtab.nochim, "/projectnb/bi594/skoppara/Assignment1/silva_nr99_v138_train_set.fa", minBoot = 50, multithread=TRUE, tryRC=TRUE)
+taxa <- addSpecies(taxa, "/projectnb/bi594/skoppara/Assignment1/silva_species_assignment_v138.fa.gz")
+
 #Obtain a csv file for the taxonomy so that it's easier to map the sequences for the heatmap.
 write.csv(taxa, file="taxa.csv",row.name=TRUE,quote=FALSE)
 unname(head(taxa, 30))
