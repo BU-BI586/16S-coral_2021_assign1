@@ -6,7 +6,10 @@ output: html_document
 ---
 ## Introduction
 
-insert introduction 
+Coral reefs are increasingly threatened by climate change, thus the need to identify the diversity of the microbial communities of coral before they die off is becoming more urgent in order to understand the roles their microbial communities play in coral health. Microbial communities may affect host coral fitness, and coral disease may influence the integrity of their microbiome, exacerbating the negative effects. We sought to examine how coral microbial communities change after outbreaks of grey-patch disease. 
+
+Our data is from Sweet et al. (2019), "Compositional homogeneity in the pathobiome of a new, slow-spreading coral disease." We identified and examined the bacterial communities on healthy and diseased corals using 16S sequencing and DNA barcoding. A reanalysis of the Sweet et al. (2019) data was performed using the dada2 pipeline in R followed by the assigning of microbial taxonomy with the Silva 16S database. We found that diseased colonies have a higher abundance of cyanobacteria than healthy colonies, in accordance with the findings of Sweet et al (2019). We additionally found that healthy colonies had higher abundances of gammaproteobacteria compared to diseased colonies. 
+
 
 ## Setup
 
@@ -270,7 +273,7 @@ plot_bar(ps.top90, x="Sample", fill="Class")
 
 ```{r, echo=FALSE, fig.width=10, fig.height = 8}
 #visusalize via counts rather than abundances:
-plot_bar(ps, x = "sample", fill= "Class") #+ facet_wrap("tank")
+plot_bar(ps, x = "sample", fill= "Class", labels=c('Diseased1', "Healthy1", "Healthy2", "Diseased 2", "Water column")) #+ facet_wrap("tank")
 #
 ```
 
