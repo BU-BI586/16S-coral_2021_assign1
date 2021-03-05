@@ -2,7 +2,9 @@
 title: "Grey Patch Disease in Coral and 16S Analysis of Bacteria"
 author: "Susritha Kopparapu, Isabel Novick, Corinne Vietorisz"
 date: "2/28/2021"
-output: html_document
+output:
+  html_document: default
+  word_document: default
 ---
 ## Introduction
 
@@ -92,13 +94,13 @@ REV.orients
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 fnFs.filtN <- file.path(path, "filtN", basename(fnFs))
 filterAndTrim(fnFs, fnFs.filtN, maxN = 0, multithread = TRUE)
 ```
 
 The below function takes in a primer sequence and a read. It counts the number of reads in which the primer is found and returns this value. 
-```{r, results=FALSE}
+```{r, results=FALSE, eval=FALSE}
 primerHits <- function(primer, fn) {
   nhits <- vcountPattern(primer, sread(readFastq(fn)), fixed = FALSE)
   return(sum(nhits > 0))
@@ -107,7 +109,7 @@ primerHits
 ```
 
 The below tables show that the primers were removed from the sequences already. No left trim is necessary when filtering the actual sequences. 
-```{r}
+```{r, eval=FALSE}
 rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[3]]), 
       FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[3]]), 
       REV.ForwardReads = sapply(REV.orients, primerHits, fn = fnFs.filtN[[3]]), 
@@ -223,24 +225,26 @@ write.csv(track,file="ReadFilterStats_AllData_final.csv",row.names=TRUE,quote=FA
 
 
 ## Assign Taxonomy
-Database used: 
+
+
+To assign each sequence its taxa, we compare the sequences to a reference database containing 16S sequences and corresponding taxonimic information for each sequence. We chose the Silva database because it contains a comprehensive library of 16S sequences and is specifically formatted for Dada2.
+
+*Citation:* 
 Michael R. McLaren. (2020). Silva SSU taxonomic training data formatted for DADA2 (Silva version 138) (Version 2) [Data set]. Zenodo. http://doi.org/10.5281/zenodo.3986799
 
-We chose the Silva database because it contains a comprehensive library of 16S sequences and is specifically formatted for Dada2.
-
-First, we classify our sequences according to our reference database with the assignTaxonomy function. This assigns taxonomic classifications to each sequence in each sample up to the Genus level.
+First, we classify our sequences according to our reference database with the `assignTaxonomy` function. This assigns taxonomic classifications to each sequence in each sample up to the Genus level.
 ```{r, eval=FALSE}
 taxa <- assignTaxonomy(seqtab.nochim, "/projectnb/bi594/skoppara/Assignment1/silva_nr99_v138_train_set.fa", minBoot = 50, multithread=TRUE, tryRC=TRUE)
 
 ```
 
-Then, we add species-level annotation to the taxonomic table with the addSpecies function.
-```{r}
+Then, we add species-level annotation to the taxonomic table with the `addSpecies` function.
+```{r, eval=FALSE}
 taxa <- addSpecies(taxa, "/projectnb/bi594/skoppara/Assignment1/silva_species_assignment_v138.fa.gz")
 ```
 
 
-We next generate a csv file for the taxonomy so that it's easier to map the sequences for the heatmap.
+We next generate a .csv file to save the taxonomic table.
 ```{r, eval=FALSE}
 write.csv(taxa, file="taxa.csv",row.name=TRUE,quote=FALSE)
 unname(head(taxa, 30))
@@ -259,11 +263,7 @@ Let's read in our sequence table, associated taxa list, and associated metadata.
 ```{r}
 seqtab.nochim <- readRDS("final_seqtab_nochim.rds")
 taxa <- readRDS("final_taxa_blastCorrected.rds")
-#head(taxa)
 samdf<-read.csv("variabletable.csv")
-head(samdf)
-#head(seqtab.nochim)
-#head(taxa)
 rownames(samdf) <- samdf$sample
 ```
 
@@ -276,41 +276,53 @@ ps
 ```
 
 We replace the sequences with shorter names. 
-```{r, echo=FALSE}
+```{r, eval=FALSE}
 ids<-taxa_names(ps)
 ids <- paste0("sq",seq(1, length(colnames(seqtab.nochim))))
 colnames(seqtab.nochim) <- ids
 
 ```
 
-Now, we make bar plots representing the abundances of the 90 most abundant taxa by sample.
+We create a phyloseq object with just the top 90 taxa.
 ```{r}
 top90 <- names(sort(taxa_sums(ps), decreasing=TRUE))[1:90]
 ps.top90 <- transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
 ps.top90 <- prune_taxa(top90, ps.top90)
-
-p <-plot_bar(ps.top90, x= "Sample",fill="Class") 
-p <- p + scale_x_discrete(labels=c('Diseased1', 'Healthy1', "Healthy2", "Diseased2", "Water column"))
-p
+ps.top90
 ```
 
+
+Now, we turn the phyloseq object containing our top 90 taxa into a datatable that will allow us to create graphics in ggplot. With this datatable, we make a .csv file for the phyloseq data. This contains the abundances of each individual in each sample by Class. 
+```{r}
+psz <- psmelt(ps.top90)
+write.csv(psz, file="Phyloseqoutputfinal.csv")
+```
+
+Now, we make bar plots representing the abundances of the 90 most abundant taxa by sample, separated by Class.
+```{r, fig.width=10, fig.height = 8, fig.cap="**Figure 1.** Abundances of the 90 most abundant bacterial taxa by sample."}
+p <- ggplot(psz, aes(x = Sample, y=Abundance, fill=Class))
+p + geom_bar(stat="identity", colour="black") +
+  scale_x_discrete(labels=c('Diseased1', 'Healthy1', "Healthy2", "Diseased2", "Water column"))
+```
+Note that the diseased samples have more cyanobacteria than the healthy samples, and the healthy samples have more gammaproteobacteria than the diseased samples. Here, we have also included a sample from the water column as a reference to see what taxa are already present in the water.  
+
+
 To plot counts rather than abundances, we create bar plots of the counts of all the individuals found in each Class by sample.
-```{r, echo=FALSE, fig.width=10, fig.height = 8}
+```{r, fig.width=10, fig.height = 8, fig.cap="**Figure 2.** Counts of all bacterial taxa by sample"}
 p2<- plot_bar(ps, x = "Sample", fill= "Class")
 p2<- p2 + scale_x_discrete(labels=c('Diseased1', 'Healthy1', "Healthy2", "Diseased2", "Water column"))
 p2
-#
 ```
-Now, we make a .csv file for the phyloseq data. This contains the abundances of each individual in each sample by Class. We use the psmelt function prior to writing the .csv because it will allow us to create graphics in ggplot with the data. 
-```{r, echo=FALSE}
-#Obtain a csv file for the phyloseq data. Will give you the abundances for each sample and class. Useful for constructing the heatmap. Also, enables you to use ggplot, and construct more aesthetically pleasing plot.
-psz <- psmelt(ps.top90)
-write.csv(psz, file="Phyloseqoutputfinal.csv")
-p3 <- ggplot(psz, aes(x=Sample, y=Abundance, fill=Class))
+
+To more clearly see how bacterial communities vary between healthy and diseased corals, we combine the healthy and diseased samples to plot taxa abundances by sample type. 
+```{r, fig.width=10, fig.height = 8, fig.cap="**Figure 3.** Bacterial taxa differ between healthy corals, diseased corals, and the water column."}
+p3 <- ggplot(psz, aes(x = type, y=Abundance, fill=Class))
 p3 + geom_bar(stat="identity", colour="black") +
-  scale_x_discrete(labels=c('Diseased1', 'Healthy1', "Healthy2", "Diseased2", "Water column"))
+  labs(x="Sample type") +
+  scale_x_discrete(labels=c('Diseased', 'Healthy', "Water column"))
+
 ```
 
 
 ## Conclusion
- We found that diseased colonies have a higher abundance of cyanobacteria than healthy colonies, in accordance with the findings of Sweet et al (2019). We additionally found that healthy colonies had higher abundances of gammaproteobacteria compared to diseased colonies. 
+Bacterial communities differed considerably between individual samples, with much greater bacterial abundance and diversity in coral-associated samples than the water column. We found that diseased colonies have a higher abundance of cyanobacteria than healthy colonies, in accordance with the findings of Sweet et al (2019). We additionally found that healthy colonies had higher abundances of gammaproteobacteria compared to diseased colonies. Overall, these results show that coral-associated bacterial communities differ between healthy and diseased corals. 
