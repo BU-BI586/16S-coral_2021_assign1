@@ -1,11 +1,13 @@
 ---
 title: "Grey Patch Disease in Coral and 16S Analysis of Bacteria"
 author: "Susritha Kopparapu, Isabel Novick, Corinne Vietorisz"
-date: "2/28/2021"
+date: "3/9/2021"
 output:
   html_document: default
   word_document: default
 ---
+*The following script is modified from this [tutorial](https://benjjneb.github.io/dada2/tutorial.html) and the edits by Carly D. Kenkel & Alizah Ali & Nicola Kriefall & Sarah Davies*
+
 ## Introduction
 
 Coral reefs are increasingly threatened by climate change, thus the need to identify the diversity of the microbial communities of coral before they die off is becoming more urgent in order to understand the roles their microbial communities play in coral health. Microbial communities may affect host coral fitness, and coral disease may influence the integrity of their microbiome, exacerbating the negative effects. We sought to examine how coral microbial communities change after outbreaks of grey-patch disease. 
@@ -41,7 +43,7 @@ packageVersion("phyloseq")
 #### Data Retrieval
 [Sweet et. al 2019](https://microbiomejournal.biomedcentral.com/articles/10.1186/s40168-019-0759-6) collected samples from healthy and diseased *Porites lobata*, as well as the water column of the Luminao reef flat in Guam (in 2016). Their data that was reanalyzed here was retrieved from [NCBI](https://www.ncbi.nlm.nih.gov/sra?LinkName=bioproject_sra_all&from_uid=448821).
 
-Samples diseased 13, healthy 11, healthy 4, diseased 14, water column 2 were selected. All files in the directory were put in the variable fns. 
+Samples diseased 13, healthy 11, healthy 4, diseased 14, and water column 2 were selected. All files in the directory were put in the variable fns. 
 ```{r, results=FALSE}
 path <- "/projectnb/bi594/skoppara/Assignment1"
 fns <- list.files(path)
@@ -49,14 +51,14 @@ fns
 ```
 
 ## Trimming and Filtering Data
-Filter through all the files and find only the fastq files. Sort them so that the reads are in the same order. 
+We filtered through all the files to find only the fastq files. We then sorted them so that the reads are in the same order. 
 ```{r}
 fastqs <- fns[grepl(".fastq$", fns)]
 fastqs <- sort(fastqs) 
 fastqs
 ```
 
-Split and store each of the files names as sample names without the .fastq file extension. Store these in another variable.
+The file names are split and stored in another variable as sample names without the .fastq file extension. 
 ```{r}
 sample.names <- sapply(strsplit(fastqs, ".fastq"), `[`, 1) 
 #sample.names
@@ -108,7 +110,7 @@ primerHits <- function(primer, fn) {
 primerHits
 ```
 
-The below tables show that the primers were removed from the sequences already. No left trim is necessary when filtering the actual sequences. 
+The below tables show that the primers were removed from the sequences already. Therefore, no left trim is necessary when filtering the actual sequences. 
 ```{r, eval=FALSE}
 rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[3]]), 
       FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[3]]), 
@@ -120,7 +122,7 @@ rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[3]]),
 
 #### Visualize Raw Data
 
-The quality plot below shows that the quality stays above or at 20 for the whole length of the sequence, however, around 200 quality does start to drop to 20. For this reason, the truncation length was chosen to be 200. 
+The quality plot below shows that the quality stays above or at 20 for the whole length of the sequence, however, around 200 the quality does start to drop to 20. For this reason, the truncation length was chosen to be 200. 
 ```{r}
 plotQualityProfile(fnFs[c(1,2,3,4,5,6,7,8,9)])
 ```
