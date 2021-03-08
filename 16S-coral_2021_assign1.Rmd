@@ -210,7 +210,7 @@ write.csv(seqtab.nochim,file="16s_nochim.csv")
 ```
 
 
-## Track Read Stats
+Lastly, we use the following code to track read stats, and save it into a final .csv file. This file contains the cumulative filtered, trimmed, denoised, and read data.
 ```{r,eval=FALSE}
 getN <- function(x) sum(getUniques(x))
 track <- cbind(out, sapply(dadaFs, getN), sapply(dadaFs, getN), rowSums(seqtab), rowSums(seqtab.nochim))
