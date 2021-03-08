@@ -151,62 +151,60 @@ head(out)
 
 
 ## Error Rates
+To estimate error rates, the code below was used. The maximum number of cycles was increased to 30 to allow convergence. Convergence was found after 4 rounds.
 ```{r,eval=FALSE}
-setDadaOpt(MAX_CONSIST=30) #increase number of cycles to allow convergence
+setDadaOpt(MAX_CONSIST=30)
 errF <- learnErrors(filtFs, multithread=TRUE)
-#Maximum cycles was set to 30, but Convergence was found after 4 rounds
+```
 
-#sanity check: visualize estimated error rates
-#error rates should decline with increasing qual score
-#red line is based on definition of quality score alone
-#black line is estimated error rate after convergence
-#dots are observed error rate for each quality score
 
+```{r,echo=FALSE, eval=FALSE}
 plotErrors(errF, nominalQ=TRUE) 
 ```
 
 
-## Dereplicate Reads
+In order to increase DADA2's accuracy and avoid extraneous comparisons, the following code was used for dereplication and to create the consensus quality profile.
 ```{r,eval=FALSE}
-#Dereplication combines all identical sequencing reads into “unique sequences” with a corresponding “abundance”: the number of reads with that unique sequence. 
-#Dereplication substantially reduces computation time by eliminating redundant comparisons.
-#DADA2 retains a summary of the quality information associated with each unique sequence. The consensus quality profile of a unique sequence is the average of the positional qualities from the dereplicated reads. These quality profiles inform the error model of the subsequent denoising step, significantly increasing DADA2’s accuracy.
 derepFs <- derepFastq(filtFs, verbose=TRUE)
-# Name the derep-class objects by the sample names
 names(derepFs) <- sample.names
 ```
 
 
-## Infer Sequence Variants
-Band size 16 for 16S
+To infer sequence variants, we used a band size of 16 for our 16S data.
 ```{r,eval=FALSE}
-#Must change some of the DADA options b/c original program optomized for ribosomal data, not ITS - from github, "We currently recommend BAND_SIZE=32 for ITS data." leave as default for 16S/18S
 setDadaOpt(BAND_SIZE=16)
 dadaFs <- dada(derepFs, err=errF, multithread=TRUE)
+```
 
-#now, look at the dada class objects by sample
-#will tell how many 'real' variants in unique input seqs
-#By default, the dada function processes each sample independently, but pooled processing is available with pool=TRUE and that may give better results for low sampling depths at the cost of increased computation time. See our discussion about pooling samples for sample inference. 
+The below shows how many real sequence variants are present.
+```{r, eval=FALSE}
 dadaFs[[1]]
 dadaFs[[5]]
+```
 
-#construct sequence table
+A sequence table was constructed below.
+```{r}
 seqtab <- makeSequenceTable(dadaFs)
+```
+
+```{r,echo=FALSE, eval=FALSE}
 head(seqtab)
 ```
 
 
-## Remove Chimeras
+To further increase the accuracy of the analysis and provide a sequence that is representative of what exists in nature, the following code was used to remove chimeras. 1 chimera was identified out of 117 input sequences.
 ```{r,eval=FALSE}
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
 dim(seqtab.nochim)
-# Identified 1 bimeras out of 117 input sequences.
+```
 
+The ratio of normal reads to sequence variants was 0.9998201, as there was only 1 chimera.
+```{r,eval=FALSE}
 sum(seqtab.nochim)/sum(seqtab)
-#The fraction of chimeras varies based on factors including experimental procedures and sample complexity, 
-#Most of your reads should remain after chimera removal (it is not uncommon for a majority of sequence variants to be removed though)
-#For our sample, this ratio was 0.9998201, there was only 1 bimera
+```
 
+Then, we generate a .csv file of the data without sequence variants.
+```{r, eval=FALSE}
 write.csv(seqtab,file="16s_seqtab.csv")
 write.csv(seqtab.nochim,file="16s_nochim.csv")
 ```
