@@ -94,13 +94,13 @@ REV.orients
 ```
 
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 fnFs.filtN <- file.path(path, "filtN", basename(fnFs))
 filterAndTrim(fnFs, fnFs.filtN, maxN = 0, multithread = TRUE)
 ```
 
 The below function takes in a primer sequence and a read. It counts the number of reads in which the primer is found and returns this value. 
-```{r, results=FALSE, eval=FALSE}
+```{r, results=FALSE, eval=TRUE}
 primerHits <- function(primer, fn) {
   nhits <- vcountPattern(primer, sread(readFastq(fn)), fixed = FALSE)
   return(sum(nhits > 0))
@@ -109,7 +109,7 @@ primerHits
 ```
 
 The below tables show that the primers were removed from the sequences already. Therefore, no left trim is necessary when filtering the actual sequences. 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[3]]), 
       FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[3]]), 
       REV.ForwardReads = sapply(REV.orients, primerHits, fn = fnFs.filtN[[3]]), 
@@ -121,9 +121,10 @@ rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[3]]),
 #### Visualize Raw Data
 
 The quality plot below shows that the quality stays above or at 20 for the whole length of the sequence, however, around 200 the quality does start to drop to 20. For this reason, the truncation length was chosen to be 200. 
-```{r}
+```{r,fig.cap="**Figure 1.** Quality plots of reads from all samples."}
 plotQualityProfile(fnFs[c(1,2,3,4,5,6,7,8,9)])
 ```
+
 
 A directory is made for the filtered files and filenames using the following code. 
 ```{r, eval=TRUE}
@@ -160,7 +161,7 @@ errF <- learnErrors(filtFs, multithread=TRUE)
 plotErrors(errF, nominalQ=TRUE) 
 ```
 
-
+## Dereplicate Reads and Infer Sequence Variants
 In order to increase DADA2's accuracy and avoid extraneous comparisons, the following code was used for dereplication and to create the consensus quality profile.
 ```{r,eval=FALSE}
 derepFs <- derepFastq(filtFs, verbose=TRUE)
@@ -189,7 +190,7 @@ seqtab <- makeSequenceTable(dadaFs)
 head(seqtab)
 ```
 
-
+## Remove Chimeras 
 To further increase the accuracy of the analysis and provide a sequence that is representative of what exists in nature, the following code was used to remove chimeras. 1 chimera was identified out of 117 input sequences.
 ```{r,eval=FALSE}
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
@@ -207,7 +208,7 @@ write.csv(seqtab,file="16s_seqtab.csv")
 write.csv(seqtab.nochim,file="16s_nochim.csv")
 ```
 
-
+## Track Read Stats
 Lastly, we use the following code to track read stats, and save it into a final .csv file. This file contains the cumulative filtered, trimmed, denoised, and read data.
 ```{r,eval=FALSE}
 getN <- function(x) sum(getUniques(x))
@@ -297,7 +298,7 @@ write.csv(psz, file="Phyloseqoutputfinal.csv")
 ```
 
 Now, we make bar plots representing the abundances of the 90 most abundant taxa by sample, separated by Class.
-```{r, fig.width=10, fig.height = 8, fig.cap="**Figure 1.** Abundances of the 90 most abundant bacterial taxa by sample."}
+```{r, fig.width=10, fig.height = 8, fig.cap="**Figure 2.** Abundances of the 90 most abundant bacterial taxa by sample."}
 p <- ggplot(psz, aes(x = Sample, y=Abundance, fill=Class))
 p + geom_bar(stat="identity", colour="black") +
   scale_x_discrete(labels=c('Diseased1', 'Healthy1', "Healthy2", "Diseased2", "Water column"))
@@ -306,14 +307,14 @@ Note that the diseased samples have more cyanobacteria than the healthy samples,
 
 
 To plot counts rather than abundances, we create bar plots of the counts of all the individuals found in each Class by sample.
-```{r, fig.width=10, fig.height = 8, fig.cap="**Figure 2.** Counts of all bacterial taxa by sample"}
+```{r, fig.width=10, fig.height = 8, fig.cap="**Figure 3.** Counts of all bacterial taxa by sample"}
 p2<- plot_bar(ps, x = "Sample", fill= "Class")
 p2<- p2 + scale_x_discrete(labels=c('Diseased1', 'Healthy1', "Healthy2", "Diseased2", "Water column"))
 p2
 ```
 
 To more clearly see how bacterial communities vary between healthy and diseased corals, we combine the healthy and diseased samples to plot taxa abundances by sample type. 
-```{r, fig.width=10, fig.height = 8, fig.cap="**Figure 3.** Bacterial taxa differ between healthy corals, diseased corals, and the water column."}
+```{r, fig.width=10, fig.height = 8, fig.cap="**Figure 4.** Bacterial taxa differ between healthy corals, diseased corals, and the water column."}
 p3 <- ggplot(psz, aes(x = type, y=Abundance, fill=Class))
 p3 + geom_bar(stat="identity", colour="black") +
   labs(x="Sample type") +
