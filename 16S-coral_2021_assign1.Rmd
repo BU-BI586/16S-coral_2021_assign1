@@ -3,8 +3,8 @@ title: "Grey Patch Disease in Coral and 16S Analysis of Bacteria"
 author: "Susritha Kopparapu, Isabel Novick, Corinne Vietorisz"
 date: "3/9/2021"
 output:
-  html_document: default
   word_document: default
+  html_document: default
 ---
 *The following script is modified from this [tutorial](https://benjjneb.github.io/dada2/tutorial.html) and the edits by Carly D. Kenkel & Alizah Ali & Nicola Kriefall & Sarah Davies*
 
@@ -169,7 +169,7 @@ names(derepFs) <- sample.names
 ```
 
 
-To infer sequence variants, we used a band size of 16 for our 16S data.
+To infer sequence variants, we used a band size of 16 for our 16S data. 16 is the default band size and is typically used for 16S data.
 ```{r,eval=FALSE}
 setDadaOpt(BAND_SIZE=16)
 dadaFs <- dada(derepFs, err=errF, multithread=TRUE)
