@@ -490,7 +490,7 @@ errF &lt;- learnErrors(filtFs, multithread=TRUE)</code></pre>
 <p>In order to increase DADA2’s accuracy and avoid extraneous comparisons, the following code was used for dereplication and to create the consensus quality profile.</p>
 <pre class="r"><code>derepFs &lt;- derepFastq(filtFs, verbose=TRUE)
 names(derepFs) &lt;- sample.names</code></pre>
-<p>To infer sequence variants, we used a band size of 16 for our 16S data.</p>
+<p>To infer sequence variants, we used a band size of 16 for our 16S data. 16 is the default band size and is typically used for 16S data.</p>
 <pre class="r"><code>setDadaOpt(BAND_SIZE=16)
 dadaFs &lt;- dada(derepFs, err=errF, multithread=TRUE)</code></pre>
 <p>The below shows how many real sequence variants are present.</p>

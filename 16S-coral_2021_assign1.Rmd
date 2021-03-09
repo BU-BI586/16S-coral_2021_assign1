@@ -3,7 +3,6 @@ title: "Grey Patch Disease in Coral and 16S Analysis of Bacteria"
 author: "Susritha Kopparapu, Isabel Novick, Corinne Vietorisz"
 date: "3/9/2021"
 output:
-  word_document: default
   html_document: default
 ---
 *The following script is modified from this [tutorial](https://benjjneb.github.io/dada2/tutorial.html) and the edits by Carly D. Kenkel & Alizah Ali & Nicola Kriefall & Sarah Davies*
