@@ -61,9 +61,7 @@ fastqs
 The file names are split and stored in another variable as sample names without the .fastq file extension. 
 ```{r}
 sample.names <- sapply(strsplit(fastqs, ".fastq"), `[`, 1) 
-#sample.names
 fnFs <- file.path(path, fastqs)
-#fnFs
 
 ```
 
@@ -88,7 +86,7 @@ allOrients <- function(primer) {
 ```
 
 The forward and reverse orients are as follows. 
-```{r, echo=FALSE}
+```{r, echo=TRUE}
 FWD.orients <- allOrients(FWD)
 REV.orients <- allOrients(REV)
 FWD.orients
@@ -128,7 +126,7 @@ plotQualityProfile(fnFs[c(1,2,3,4,5,6,7,8,9)])
 ```
 
 A directory is made for the filtered files and filenames using the following code. 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 filt_path <- file.path(path, "trimmed")
 if(!file_test("-d", filt_path)) dir.create(filt_path)
 filtFs <- file.path(filt_path, paste0(sample.names, "_F_filt.fastq.gz"))
@@ -183,7 +181,7 @@ dadaFs[[5]]
 ```
 
 A sequence table was constructed below.
-```{r}
+```{r, eval=FALSE}
 seqtab <- makeSequenceTable(dadaFs)
 ```
 

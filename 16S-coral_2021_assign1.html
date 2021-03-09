@@ -364,12 +364,12 @@ summary {
 
 <h1 class="title toc-ignore">Grey Patch Disease in Coral and 16S Analysis of Bacteria</h1>
 <h4 class="author">Susritha Kopparapu, Isabel Novick, Corinne Vietorisz</h4>
-<h4 class="date">2/28/2021</h4>
+<h4 class="date">3/9/2021</h4>
 
 </div>
 
 
-<p><em>The following script is modified from this (tutorial)[<a href="https://benjjneb.github.io/dada2/tutorial.html" class="uri">https://benjjneb.github.io/dada2/tutorial.html</a>] with edits by Carly D. Kenkel &amp; Alizah Ali &amp; Nicola Kriefall &amp; Sarah Davies</em></p>
+<p><em>The following script is modified from this <a href="https://benjjneb.github.io/dada2/tutorial.html">tutorial</a> and the edits by Carly D. Kenkel &amp; Alizah Ali &amp; Nicola Kriefall &amp; Sarah Davies</em></p>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
 <p>Coral reefs are increasingly threatened by climate change, thus the need to identify the diversity of the microbial communities of coral before they die off is becoming more urgent in order to understand the roles their microbial communities play in coral health. Microbial communities may affect host coral fitness, and coral disease may influence the integrity of their microbiome, exacerbating the negative effects. We sought to examine how coral microbial communities change after outbreaks of grey-patch disease.</p>
@@ -408,9 +408,7 @@ fastqs</code></pre>
 ## [4] &quot;SRR6946101_1.fastq&quot; &quot;SRR6946115_1.fastq&quot;</code></pre>
 <p>The file names are split and stored in another variable as sample names without the .fastq file extension.</p>
 <pre class="r"><code>sample.names &lt;- sapply(strsplit(fastqs, &quot;.fastq&quot;), `[`, 1) 
-#sample.names
-fnFs &lt;- file.path(path, fastqs)
-#fnFs</code></pre>
+fnFs &lt;- file.path(path, fastqs)</code></pre>
 </div>
 <div id="sequence-verification" class="section level2">
 <h2>Sequence Verification</h2>
@@ -427,10 +425,14 @@ REV &lt;- &quot;AGTCAGTCAGCCGGACTACNVGGGTWTCTAAT&quot;</code></pre>
   return(sapply(orients, toString))  
 }</code></pre>
 <p>The forward and reverse orients are as follows.</p>
+<pre class="r"><code>FWD.orients &lt;- allOrients(FWD)
+REV.orients &lt;- allOrients(REV)
+FWD.orients</code></pre>
 <pre><code>##                           Forward                        Complement 
 ## &quot;TATGGTAATTGTCTCCTACTTRRSGCAGCAG&quot; &quot;ATACCATTAACAGAGGATGAAYYSCGTCGTC&quot; 
 ##                           Reverse                           RevComp 
 ## &quot;GACGACGSRRTTCATCCTCTGTTAATGGTAT&quot; &quot;CTGCTGCSYYAAGTAGGAGACAATTACCATA&quot;</code></pre>
+<pre class="r"><code>REV.orients</code></pre>
 <pre><code>##                            Forward                         Complement 
 ## &quot;AGTCAGTCAGCCGGACTACNVGGGTWTCTAAT&quot; &quot;TCAGTCAGTCGGCCTGATGNBCCCAWAGATTA&quot; 
 ##                            Reverse                            RevComp 
@@ -469,60 +471,29 @@ filtFs &lt;- file.path(filt_path, paste0(sample.names, &quot;_F_filt.fastq.gz&qu
 </div>
 <div id="error-rates" class="section level2">
 <h2>Error Rates</h2>
-<pre class="r"><code>setDadaOpt(MAX_CONSIST=30) #increase number of cycles to allow convergence
-errF &lt;- learnErrors(filtFs, multithread=TRUE)
-#Maximum cycles was set to 30, but Convergence was found after 4 rounds
-
-#sanity check: visualize estimated error rates
-#error rates should decline with increasing qual score
-#red line is based on definition of quality score alone
-#black line is estimated error rate after convergence
-#dots are observed error rate for each quality score
-
-plotErrors(errF, nominalQ=TRUE) </code></pre>
-</div>
-<div id="dereplicate-reads" class="section level2">
-<h2>Dereplicate Reads</h2>
-<pre class="r"><code>#Dereplication combines all identical sequencing reads into “unique sequences” with a corresponding “abundance”: the number of reads with that unique sequence. 
-#Dereplication substantially reduces computation time by eliminating redundant comparisons.
-#DADA2 retains a summary of the quality information associated with each unique sequence. The consensus quality profile of a unique sequence is the average of the positional qualities from the dereplicated reads. These quality profiles inform the error model of the subsequent denoising step, significantly increasing DADA2’s accuracy.
-derepFs &lt;- derepFastq(filtFs, verbose=TRUE)
-# Name the derep-class objects by the sample names
+<p>To estimate error rates, the code below was used. The maximum number of cycles was increased to 30 to allow convergence. Convergence was found after 4 rounds.</p>
+<pre class="r"><code>setDadaOpt(MAX_CONSIST=30)
+errF &lt;- learnErrors(filtFs, multithread=TRUE)</code></pre>
+<p>In order to increase DADA2’s accuracy and avoid extraneous comparisons, the following code was used for dereplication and to create the consensus quality profile.</p>
+<pre class="r"><code>derepFs &lt;- derepFastq(filtFs, verbose=TRUE)
 names(derepFs) &lt;- sample.names</code></pre>
-</div>
-<div id="infer-sequence-variants" class="section level2">
-<h2>Infer Sequence Variants</h2>
-<p>Band size 16 for 16S</p>
-<pre class="r"><code>#Must change some of the DADA options b/c original program optomized for ribosomal data, not ITS - from github, &quot;We currently recommend BAND_SIZE=32 for ITS data.&quot; leave as default for 16S/18S
-setDadaOpt(BAND_SIZE=16)
-dadaFs &lt;- dada(derepFs, err=errF, multithread=TRUE)
-
-#now, look at the dada class objects by sample
-#will tell how many &#39;real&#39; variants in unique input seqs
-#By default, the dada function processes each sample independently, but pooled processing is available with pool=TRUE and that may give better results for low sampling depths at the cost of increased computation time. See our discussion about pooling samples for sample inference. 
-dadaFs[[1]]
-dadaFs[[5]]
-
-#construct sequence table
-seqtab &lt;- makeSequenceTable(dadaFs)
-head(seqtab)</code></pre>
-</div>
-<div id="remove-chimeras" class="section level2">
-<h2>Remove Chimeras</h2>
+<p>To infer sequence variants, we used a band size of 16 for our 16S data.</p>
+<pre class="r"><code>setDadaOpt(BAND_SIZE=16)
+dadaFs &lt;- dada(derepFs, err=errF, multithread=TRUE)</code></pre>
+<p>The below shows how many real sequence variants are present.</p>
+<pre class="r"><code>dadaFs[[1]]
+dadaFs[[5]]</code></pre>
+<p>A sequence table was constructed below.</p>
+<pre class="r"><code>seqtab &lt;- makeSequenceTable(dadaFs)</code></pre>
+<p>To further increase the accuracy of the analysis and provide a sequence that is representative of what exists in nature, the following code was used to remove chimeras. 1 chimera was identified out of 117 input sequences.</p>
 <pre class="r"><code>seqtab.nochim &lt;- removeBimeraDenovo(seqtab, method=&quot;consensus&quot;, multithread=TRUE, verbose=TRUE)
-dim(seqtab.nochim)
-# Identified 1 bimeras out of 117 input sequences.
-
-sum(seqtab.nochim)/sum(seqtab)
-#The fraction of chimeras varies based on factors including experimental procedures and sample complexity, 
-#Most of your reads should remain after chimera removal (it is not uncommon for a majority of sequence variants to be removed though)
-#For our sample, this ratio was 0.9998201, there was only 1 bimera
-
-write.csv(seqtab,file=&quot;16s_seqtab.csv&quot;)
+dim(seqtab.nochim)</code></pre>
+<p>The ratio of normal reads to sequence variants was 0.9998201, as there was only 1 chimera.</p>
+<pre class="r"><code>sum(seqtab.nochim)/sum(seqtab)</code></pre>
+<p>Then, we generate a .csv file of the data without sequence variants.</p>
+<pre class="r"><code>write.csv(seqtab,file=&quot;16s_seqtab.csv&quot;)
 write.csv(seqtab.nochim,file=&quot;16s_nochim.csv&quot;)</code></pre>
-</div>
-<div id="track-read-stats" class="section level2">
-<h2>Track Read Stats</h2>
+<p>Lastly, we use the following code to track read stats, and save it into a final .csv file. This file contains the cumulative filtered, trimmed, denoised, and read data.</p>
 <pre class="r"><code>getN &lt;- function(x) sum(getUniques(x))
 track &lt;- cbind(out, sapply(dadaFs, getN), sapply(dadaFs, getN), rowSums(seqtab), rowSums(seqtab.nochim))
 colnames(track) &lt;- c(&quot;input&quot;, &quot;filtered&quot;, &quot;denoised&quot;, &quot;merged&quot;, &quot;tabled&quot;, &quot;nonchim&quot;)
